@@ -8,7 +8,7 @@
 (defsystem #:naming
   :author "Liutos <mat.liutos@gmail.com>"
   :version "0.1.0"
-  :depends-on ()
+  :depends-on (#:cl-dbi)
   :components
   ((:module "src"
             :components
