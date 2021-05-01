@@ -21,4 +21,8 @@
                        (:module "use_case"
                                 :components
                                 ((:file "create_letter"))
-                                :depends-on ("entity"))))))))
+                                :depends-on ("entity"))))
+             (:module "repository"
+                      :components
+                      ((:file "letter"))
+                      :depends-on ("app"))))))
