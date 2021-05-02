@@ -20,7 +20,8 @@
                                  (:file "word")))
                        (:module "use_case"
                                 :components
-                                ((:file "create_letter"))
+                                ((:file "create_letter")
+                                 (:file "create_word"))
                                 :depends-on ("entity"))))
              (:module "repository"
                       :components

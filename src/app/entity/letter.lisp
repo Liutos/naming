@@ -12,6 +12,7 @@
     :type character)
    (id
     :accessor letter-id
+    :initarg :id
     :type (or integer null)))
   (:documentation "一个中文的字"))
 
