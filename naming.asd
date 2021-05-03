@@ -25,5 +25,7 @@
                                 :depends-on ("entity"))))
              (:module "repository"
                       :components
-                      ((:file "letter"))
+                      ((:file "connection_interface")
+                       (:file "letter"
+                              :depends-on ("connection_interface")))
                       :depends-on ("app"))))))

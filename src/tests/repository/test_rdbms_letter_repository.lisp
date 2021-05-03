@@ -5,10 +5,11 @@
   (:import-from #:naming.app.entity.letter
                 #:letter
                 #:letter-id)
+  (:import-from #:naming.repository.connection-interface
+                #:execute-sql
+                #:get-last-insert-id)
   (:import-from #:naming.repository.letter
                 #:add
-                #:execute-sql
-                #:get-last-insert-id
                 #:rdbms-repository))
 
 (in-package #:naming.tests.repository.test-rdbms-letter-repository)

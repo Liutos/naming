@@ -6,7 +6,10 @@
                 #:add
                 #:letter
                 #:letter-content
-                #:letter-id))
+                #:letter-id)
+  (:import-from #:naming.repository.connection-interface
+                #:execute-sql
+                #:get-last-insert-id))
 
 (in-package #:naming.repository.letter)
 
@@ -15,18 +18,6 @@
 
 (defgeneric release-connection (pool connection)
   (:documentation "将连接归还给池。"))
-
-(defgeneric execute-sql (connection sql)
-  (:documentation "执行SQL。"))
-
-(defgeneric fetch-all (connection)
-  (:documentation "获取所有的结果集。"))
-
-(defgeneric fetch-row (connection)
-  (:documentation "获取一行查询结果。"))
-
-(defgeneric get-last-insert-id (connection)
-  (:documentation "获取最新的自增ID。"))
 
 (defclass rdbms-repository ()
   ((connection
