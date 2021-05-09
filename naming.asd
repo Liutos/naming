@@ -8,7 +8,9 @@
 (defsystem #:naming
   :author "Liutos <mat.liutos@gmail.com>"
   :version "0.1.0"
-  :depends-on (#:cl-dbi)
+  :depends-on (#:cl-dbi
+               #:clack
+               #:ningle)
   :components
   ((:module "src"
             :components
@@ -25,4 +27,11 @@
                       :components
                       ((:file "connection_interface")
                        (:file "letter"
-                              :depends-on ("connection_interface"))))))))
+                              :depends-on ("connection_interface"))))
+             (:module "web"
+                      :components
+                      ((:file "app")
+                       (:module "controller"
+                                :components
+                                ((:file "find_letter_by_pinyin"))
+                                :depends-on ("app"))))))))
