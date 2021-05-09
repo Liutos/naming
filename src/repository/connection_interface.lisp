@@ -11,7 +11,7 @@
 (defgeneric fetch-all (connection)
   (:documentation "获取所有的结果集。"))
 
-(defgeneric fetch-row (connection)
+(defgeneric fetch-one (connection)
   (:documentation "获取一行查询结果。"))
 
 (defgeneric get-last-insert-id (connection)

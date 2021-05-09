@@ -16,20 +16,13 @@
                       :components
                       ((:module "entity"
                                 :components
-                                ((:file "letter")
-                                 (:file "word")))
+                                ((:file "letter")))
                        (:module "use_case"
                                 :components
-                                ((:file "create_letter")
-                                 (:file "create_word"))
+                                ((:file "find_letter_by_pinyin"))
                                 :depends-on ("entity"))))
-             (:module "infra"
-                      :components
-                      ((:file "db_connection"))
-                      :depends-on ("repository"))
              (:module "repository"
                       :components
                       ((:file "connection_interface")
                        (:file "letter"
-                              :depends-on ("connection_interface")))
-                      :depends-on ("app"))))))
+                              :depends-on ("connection_interface"))))))))

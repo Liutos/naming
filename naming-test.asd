@@ -16,8 +16,4 @@
                       :components
                       ((:module "repository"
                                 :components
-                                ((:file "test_rdbms_letter_repository")))
-                       (:module "use_case"
-                                :components
-                                ((:file "test_create_letter")
-                                 (:file "test_create_word")))))))))
+                                ((:file "test_mysql_letter_repository")))))))))
