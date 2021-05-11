@@ -23,6 +23,10 @@
                                 :components
                                 ((:file "find_letter_by_pinyin"))
                                 :depends-on ("entity"))))
+             (:module "infra"
+                      :components
+                      ((:file "db_connection"))
+                      :depends-on ("repository"))
              (:module "repository"
                       :components
                       ((:file "connection_interface")
