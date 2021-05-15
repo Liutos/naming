@@ -5,14 +5,18 @@
   (:import-from #:naming.app.entity.letter
                 #:<letter>
                 #:<pinyin>
+                #:add
                 #:find-by-pinyin
+                #:letter-content
+                #:letter-id
                 #:letter-pinyins
                 #:pinyin-content
                 #:pinyin-tone)
   (:import-from #:naming.repository.connection-interface
                 #:execute-sql
                 #:fetch-all
-                #:fetch-one))
+                #:fetch-one
+                #:get-last-insert-id))
 
 (in-package #:naming.repository.letter)
 

@@ -10,6 +10,7 @@
   :version "0.1.0"
   :depends-on (#:cl-dbi
                #:clack
+               #:jonathan
                #:ningle)
   :components
   ((:module "src"
@@ -21,7 +22,8 @@
                                 ((:file "letter")))
                        (:module "use_case"
                                 :components
-                                ((:file "find_letter_by_pinyin"))
+                                ((:file "add_letter")
+                                 (:file "find_letter_by_pinyin"))
                                 :depends-on ("entity"))))
              (:module "infra"
                       :components
@@ -37,5 +39,6 @@
                       ((:file "app")
                        (:module "controller"
                                 :components
-                                ((:file "find_letter_by_pinyin"))
+                                ((:file "add_letter")
+                                 (:file "find_letter_by_pinyin"))
                                 :depends-on ("app"))))))))
