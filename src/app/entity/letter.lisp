@@ -10,8 +10,8 @@
     :initarg :content
     :reader pinyin-content)
    (tone
-    :initarg :tone
-    :reader pinyin-tone))
+    :accessor pinyin-tone
+    :initarg :tone))
   (:documentation "拼音值类型"))
 
 (defclass <letter> ()
