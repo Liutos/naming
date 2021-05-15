@@ -30,11 +30,15 @@
                       :components
                       ((:file "db_connection"))
                       :depends-on ("repository"))
+             (:module "lib"
+                      :components
+                      ((:file "sql_builder")))
              (:module "repository"
                       :components
                       ((:file "connection_interface")
                        (:file "letter"
-                              :depends-on ("connection_interface"))))
+                              :depends-on ("connection_interface")))
+                      :depends-on ("lib"))
              (:module "web"
                       :components
                       ((:file "app")

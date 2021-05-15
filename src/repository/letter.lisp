@@ -11,7 +11,13 @@
                 #:letter-id
                 #:letter-pinyins
                 #:pinyin-content
-                #:pinyin-tone)
+                #:pinyin-content-bound-p
+                #:pinyin-tone
+                #:pinyin-tone-bound-p)
+  (:import-from #:naming.lib.sql-builder
+                #:<sql-builder>
+                #:to-sql
+                #:where)
   (:import-from #:naming.repository.connection-interface
                 #:execute-sql
                 #:fetch-all
@@ -28,11 +34,14 @@
 
 (defun find-letter-pinyins (connection pinyin)
   (check-type pinyin <pinyin>)
-  (let ((sql (format nil "SELECT * FROM `t_letter_pinyin` WHERE `content` = '~A' AND `tone` = ~D"
-                     (pinyin-content pinyin)
-                     (pinyin-tone pinyin))))
-    (execute-sql connection sql)
-    (fetch-all connection)))
+  (let ((builder (make-instance '<sql-builder> :table "t_letter_pinyin" :type :select)))
+    (when (pinyin-content-bound-p pinyin)
+      (where builder (list := "content" (pinyin-content pinyin))))
+    (when (pinyin-tone-bound-p pinyin)
+      (where builder (list := "tone" (pinyin-tone pinyin))))
+    (let ((sql (to-sql builder)))
+      (execute-sql connection sql)
+      (fetch-all connection))))
 
 (defun find-pinyins-by-letter (connection letter-id)
   (check-type letter-id integer)

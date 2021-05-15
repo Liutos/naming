@@ -31,3 +31,9 @@
 
 (defgeneric find-by-pinyin (repository pinyin)
   (:documentation "找出相同发音的汉字"))
+
+(defun pinyin-content-bound-p (pinyin)
+  (slot-boundp pinyin 'content))
+
+(defun pinyin-tone-bound-p (pinyin)
+  (slot-boundp pinyin 'tone))
