@@ -1,0 +1,151 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  ;;#+quicklisp(ql:quickload '() :silent t)
+  (ql:quickload 'naming))
+
+(defpackage :ros.script.import_letter.3830046809
+  (:use :cl)
+  (:import-from #:cl-ppcre
+                #:register-groups-bind)
+  (:import-from #:naming.app.entity.letter
+                #:<letter>
+                #:<pinyin>
+                #:add
+                #:letter-content
+                #:letter-id)
+  (:import-from #:naming.infra.db-connection
+                #:close-mysql-connection
+                #:open-mysql-connection)
+  (:import-from #:naming.repository.letter
+                #:<mysql-letter-repository>))
+
+(in-package :ros.script.import_letter.3830046809)
+
+(defclass <file-service> ()
+  ())
+
+(defclass <params> ()
+  ())
+
+(defclass <use-case> ()
+  ((file-service
+    :initarg :file-service
+    :reader use-case-file-service)
+   (letter-repository
+    :initarg :letter-repository
+    :reader use-case-letter-repository)
+   (params
+    :initarg :params
+    :reader use-case-params))
+  (:documentation "将chinese-xinhua的汉字导入naming。"))
+
+(defun find-first-non-alpha (pinyin)
+  "找出拼音中的第一个非英文字符。"
+  (find-if #'(lambda (c)
+               (not (< (char-code #\a) (char-code c) (char-code #\z))))
+           (coerce pinyin 'list)))
+
+(defun latin-to-ascii-tone (latin)
+  "将拉丁字母LATIN转换为英文和声调。"
+  (when (< (char-code #\a) (char-code latin) (char-code #\z))
+    (return-from latin-to-ascii-tone latin))
+  (let ((name (char-name latin)))
+    ;; 带音标的字符
+    (register-groups-bind (c superscript)
+        ("LATIN_SMALL_LETTER_(.*)_WITH_(.*)" name)
+      (return-from latin-to-ascii-tone
+        (values (char-downcase (char c 0))
+                (cond ((string= superscript "MACRON")
+                       1)
+                      ((string= superscript "ACUTE")
+                       2)
+                      ((string= superscript "CARON")
+                       3)
+                      ((string= superscript "GRAVE")
+                       4)))))
+    ;; 带上标的字符
+    (register-groups-bind (c)
+        ("LATIN_SMALL_LETTER_SCRIPT_(.*)" name)
+      (return-from latin-to-ascii-tone (char-downcase (char c 0))))
+    ;; 普通拉丁字符
+    (register-groups-bind (c)
+        ("LATIN_SMALL_LETTER_(.*)" name)
+      (return-from latin-to-ascii-tone (char-downcase (char c 0))))
+    ;; 0声调
+    (when (string= name "DIGIT_ZERO")
+      (return-from latin-to-ascii-tone (values nil 0)))
+    (when (string= name "DIGIT_ONE")
+      (return-from latin-to-ascii-tone (values nil 1)))
+    ;; 抛个错方便排查
+    (error "不认识的拉丁字符~C：~A" latin name)))
+
+(defun pinyin-to-ascii (pinyin)
+  "将拉丁字符的拼音字符串转换为英文和声调。"
+  (let (ascii tone)
+    (dolist (c (coerce pinyin 'list))
+      (multiple-value-bind (ch _tone)
+          (latin-to-ascii-tone c)
+        (when _tone
+          (setf tone _tone))
+        (when ch
+          (push ch ascii))))
+    (values (nreverse (coerce ascii 'string))
+            (or tone 0))))
+
+(defgeneric get-file-path (params)
+  (:documentation "接收文件路径。"))
+
+(defgeneric read-content (file-service file-path)
+  (:documentation "读取文件内容。"))
+
+(defgeneric run (use-case))
+
+(defmethod get-file-path ((params <params>))
+  "/Users/liutos/Projects/chinese-xinhua/data/word.json")
+
+(defmethod read-content ((file-service <file-service>) (file-path string))
+  (declare (ignorable file-service))
+  (uiop:read-file-string file-path))
+
+(defmethod run ((use-case <use-case>))
+  (let* ((file-service (use-case-file-service use-case))
+         (letter-repository (use-case-letter-repository use-case))
+         (params (use-case-params use-case))
+         (file-path (get-file-path params)))
+    (let* ((content (read-content file-service file-path))
+           (raw-letters (jonathan:parse content
+                                        :keywords-to-read '("pinyin" "word"))))
+      (dolist (raw-letter raw-letters)
+        (let* ((content (char (getf raw-letter :|word|) 0))
+               (pinyin (getf raw-letter :|pinyin|)))
+          (multiple-value-bind (pinyin-content tone)
+              (pinyin-to-ascii pinyin)
+            (let* ((pinyins (list (make-instance '<pinyin>
+                                                 :content pinyin-content
+                                                 :tone tone)))
+                   (letter (make-instance '<letter>
+                                          :content content
+                                          :pinyins pinyins)))
+              (add letter-repository letter)
+              (format t "添加了文字~C，ID为~D~%"
+                      (letter-content letter)
+                      (letter-id letter)))))))))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (let ((mysql-connection (open-mysql-connection)))
+    (unwind-protect
+         (let* ((letter-repository (make-instance '<mysql-letter-repository>
+                                                  :connection mysql-connection))
+                (use-case (make-instance '<use-case>
+                                         :file-service (make-instance '<file-service>)
+                                         :letter-repository letter-repository
+                                         :params (make-instance '<params>))))
+           (run use-case))
+      (close-mysql-connection mysql-connection))))
+;;; vim: set ft=lisp lisp:

@@ -9,6 +9,7 @@
   :author "Liutos <mat.liutos@gmail.com>"
   :version "0.1.0"
   :depends-on (#:cl-dbi
+               #:cl-ppcre
                #:clack
                #:jonathan
                #:ningle)
