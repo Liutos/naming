@@ -78,4 +78,5 @@
         (push (make-instance '<letter>
                              :content (getf letter-plist :|content|)
                              :pinyins pinyins)
-              letters)))))
+              letters)))
+    (nreverse letters)))

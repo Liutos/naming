@@ -3,7 +3,8 @@
 (defpackage #:naming.web.controller.find-letter-by-pinyin
   (:use #:cl)
   (:import-from #:naming.app.entity.letter
-                #:<pinyin>)
+                #:<pinyin>
+                #:letter-content)
   (:import-from #:naming.infra.db-connection
                 #:open-mysql-connection)
   (:import-from #:naming.repository.letter
@@ -39,6 +40,10 @@
          (use-case (make-instance '<use-case>
                                   :letter-repository letter-repository
                                   :params http-params)))
-    (let ((letters (run use-case))))))
+    (let ((letters (run use-case)))
+      (jonathan:to-json
+       (mapcar #'(lambda (letter)
+                   (list :content (letter-content letter)))
+               letters)))))
 
 (setf (ningle:route *app* "/letter") #'find-letter-by-pinyin)
