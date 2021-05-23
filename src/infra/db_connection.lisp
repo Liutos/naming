@@ -48,7 +48,7 @@
 (defun open-mysql-connection ()
   (let ((dbi-connection
          (dbi:connect :mysql
-                      :database-name "naming_unittest"
+                      :database-name "naming"
                       :password "2617267"
                       :username "root")))
     (make-instance '<mysql-connection>

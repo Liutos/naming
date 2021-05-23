@@ -14,7 +14,8 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (clack:clackup naming.web.app::*app*)
+  (clack:clackup naming.web.app::*app*
+                 :address "0.0.0.0")
   (loop
      (sleep 10)))
 ;;; vim: set ft=lisp lisp:
