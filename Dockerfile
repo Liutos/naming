@@ -19,6 +19,7 @@ RUN ros install cl-dbi && \
     ros install ningle
 RUN ros install hunchentoot
 # 必须安装libmysqlclient_r或libmysqlclient的其中一个
+# 如果是在腾讯云上安装，要替换为libmysqlclient-dev
 RUN apt-get update -y && \
     apt-get install -y default-libmysqlclient-dev
 # 比起从GitHub上拉取代码，读取本地目录更便于修改后尝试新功能。

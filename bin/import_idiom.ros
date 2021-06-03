@@ -1,0 +1,57 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  ;;#+quicklisp(ql:quickload '() :silent t)
+  (ql:quickload :naming))
+
+(defpackage :ros.script.import_idiom.3831777157
+  (:use :cl)
+  (:import-from #:naming.app.use-case.add-idiom
+                #:<letter-not-found>
+                #:<use-case>
+                #:get-content
+                #:get-ignore-not-found-p
+                #:run)
+  (:import-from #:naming.infra.db-connection
+                #:open-mysql-connection)
+  (:import-from #:naming.repository.idiom
+                #:<mysql-idiom-repository>)
+  (:import-from #:naming.repository.letter
+                #:<mysql-letter-repository>))
+(in-package :ros.script.import_idiom.3831777157)
+
+(defclass <json-params> ()
+  ((raw-content
+    :initarg :raw-content)))
+
+(defmethod get-content ((params <json-params>))
+  (slot-value params 'raw-content))
+
+(defmethod get-ignore-not-found-p ((params <json-params>))
+  t)
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (let* ((connection (open-mysql-connection))
+         (idiom-repository (make-instance '<mysql-idiom-repository>
+                                          :connection connection))
+         (letter-repository (make-instance '<mysql-letter-repository>
+                                           :connection connection)))
+    ;; 读取文件内容
+    (let* ((file-content (uiop:read-file-string "/Users/liutos/Projects/chinese-xinhua/data/idiom.json"))
+           (raw-idioms (jonathan:parse file-content
+                                       :keywords-to-read '("word"))))
+      (dolist (raw-idiom raw-idioms)
+        (setf raw-idiom (getf raw-idiom :|word|))
+        (format t "正在处理成语~A~%" raw-idiom)
+        (let* ((params (make-instance '<json-params> :raw-content raw-idiom))
+               (use-case (make-instance '<use-case>
+                                       :idiom-repository idiom-repository
+                                       :letter-repository letter-repository
+                                       :params params)))
+          (run use-case))))))
+;;; vim: set ft=lisp lisp:

@@ -20,6 +20,7 @@
     :reader letter-content
     :type character)
    (id
+    :initarg :id
     :accessor letter-id)
    (pinyins
     :initarg :pinyins
@@ -28,6 +29,9 @@
 
 (defgeneric add (repository letter)
   (:documentation "将汉字保存到仓库中"))
+
+(defgeneric find-by-content (repository content)
+  (:documentation "找出这么写的字。"))
 
 (defgeneric find-by-pinyin (repository pinyin)
   (:documentation "找出相同发音的汉字"))

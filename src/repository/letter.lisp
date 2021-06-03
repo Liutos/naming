@@ -6,6 +6,7 @@
                 #:<letter>
                 #:<pinyin>
                 #:add
+                #:find-by-content
                 #:find-by-pinyin
                 #:letter-content
                 #:letter-id
@@ -70,6 +71,26 @@
                              (pinyin-tone pinyin))))
       (setf (letter-id letter) id)
       letter)))
+
+(defmethod find-by-content ((repository <mysql-letter-repository>) (content character))
+  "找出写做CONTENT的字对象。"
+  (let ((builder (make-instance '<sql-builder>
+                                :table "t_letter"
+                                :type :select))
+        sql)
+    (where builder (list := "content" content))
+    (setf sql (to-sql builder))
+    (format t "sql is ~A~%" sql)
+    (let ((connection (mysql-letter-repository-connection repository)))
+      (execute-sql connection sql)
+      (let ((plist (fetch-one connection)))
+        (unless plist
+          (return-from find-by-content nil))
+        (make-instance '<letter>
+                       :content (char (getf plist :|content|) 0)
+                       :id (getf plist :|id|)
+                       ;;--- TODO: 补充获取拼音列表的逻辑
+                       )))))
 
 (defmethod find-by-pinyin ((repository <mysql-letter-repository>) (pinyin <pinyin>))
   (let* ((connection (mysql-letter-repository-connection repository))

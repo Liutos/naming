@@ -20,10 +20,12 @@
                       :components
                       ((:module "entity"
                                 :components
-                                ((:file "letter")))
+                                ((:file "idiom")
+                                 (:file "letter")))
                        (:module "use_case"
                                 :components
-                                ((:file "add_letter")
+                                ((:file "add_idiom")
+                                 (:file "add_letter")
                                  (:file "find_letter_by_pinyin"))
                                 :depends-on ("entity"))))
              (:module "infra"
@@ -36,6 +38,8 @@
              (:module "repository"
                       :components
                       ((:file "connection_interface")
+                       (:file "idiom"
+                              :depends-on ("connection_interface"))
                        (:file "letter"
                               :depends-on ("connection_interface")))
                       :depends-on ("lib"))
