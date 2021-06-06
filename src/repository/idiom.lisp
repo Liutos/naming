@@ -6,7 +6,8 @@
                 #:<idiom>
                 #:add
                 #:idiom-id
-                #:idiom-letters)
+                #:idiom-letters
+                #:query)
   (:import-from #:naming.app.entity.letter
                 #:letter-content
                 #:letter-id)
@@ -17,6 +18,8 @@
                 #:where)
   (:import-from #:naming.repository.connection-interface
                 #:execute-sql
+                #:fetch-all
+                #:fetch-one
                 #:get-last-insert-id))
 
 (in-package #:naming.repository.idiom)
@@ -58,3 +61,31 @@
             (execute-sql connection sql))
           (setf (idiom-id idiom) idiom-id)
           idiom)))))
+
+(defmethod query ((repository <mysql-idiom-repository>) &rest args &key letter-id)
+  "查找出符合条件的成语。
+
+如果LETTER-ID不为NIL，那么结果的成语必须含有这个id的字。"
+  (declare (ignorable args))
+  (let ((builder (make-instance '<sql-builder>
+                                :table "t_idiom_letter"
+                                :type :select)))
+    (when letter-id
+      (where builder (list := "letter_id" letter-id)))
+    (let ((sql (to-sql builder)))
+      (with-slots (connection) repository
+        (execute-sql connection sql)
+        (let ((rows (fetch-all connection)))
+          (mapcar #'(lambda (row)
+                      (let ((builder (make-instance '<sql-builder>
+                                                    :table "t_idiom"
+                                                    :type :select)))
+                        (where builder (list := "id" (getf row :|idiom_id|)))
+                        (let ((sql (to-sql builder)))
+                          (execute-sql connection sql)
+                          (let ((idiom-row (fetch-one connection)))
+                            (make-instance '<idiom>
+                                           :content (getf idiom-row :|content|)
+                                           :id (getf idiom-row :|id|)
+                                           :letters '())))))
+                  rows))))))

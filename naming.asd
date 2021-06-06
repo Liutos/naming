@@ -26,6 +26,7 @@
                                 :components
                                 ((:file "add_idiom")
                                  (:file "add_letter")
+                                 (:file "find_idiom_by_letter")
                                  (:file "find_letter_by_pinyin"))
                                 :depends-on ("entity"))))
              (:module "infra"
@@ -49,5 +50,6 @@
                        (:module "controller"
                                 :components
                                 ((:file "add_letter")
+                                 (:file "find_idiom_by_letter")
                                  (:file "find_letter_by_pinyin"))
                                 :depends-on ("app"))))))))
