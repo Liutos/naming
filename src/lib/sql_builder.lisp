@@ -57,8 +57,10 @@
       (with-slots (column operator value)
           (nth i conditions)
         ;;--- TODO: 这里要怎么写才比较优雅呢？
-        (cond ((eq operator :in)
-               (format s " `~A` IN (~{~S~^, ~})" column value))
+        (cond ((and (eq operator :in) (numberp (first value)))
+               (format s " `~A` IN (~{~D~^, ~})" column value))
+              ((and (eq operator :in) (characterp (first value)))
+               (format s " `~A` IN (~{'~C'~^, ~})" column value))
               (t
                (let ((fmt (typecase value
                             (character " `~A` ~A '~C'")

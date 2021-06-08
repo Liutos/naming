@@ -35,18 +35,22 @@
 (defmethod get-pinyin ((params <http-params>))
   "从HTTP请求中提取拼音和声调。"
   (let* ((params (http-params-params params))
-         (content (cdr (assoc "content" params :test #'string=)))
-         (tone (cdr (assoc "tone" params :test #'string=))))
-    (when (and (null content) (null tone))
-      (return-from get-pinyin nil))
-
-    (make-instance '<pinyin> :content content :tone tone)))
+         (pinyins (cdr (assoc "pinyins" params :test #'string=))))
+    (mapcar #'(lambda (pinyin)
+                (let ((content (cdr (assoc "content" pinyin :test #'string=)))
+                      (tone (cdr (assoc "tone" pinyin :test #'string=))))
+                  (make-instance '<pinyin>
+                                 :content content
+                                 :tone tone)))
+            pinyins)))
 
 (defmethod get-radicals ((params <http-params>))
   "从HTTP请求中提取偏旁部首。"
   (let* ((params (http-params-params params))
          (radicals (cdr (assoc "radicals" params :test #'string=))))
-    (and radicals (char radicals 0))))
+    (mapcar #'(lambda (radical)
+                (char radical 0))
+            radicals)))
 
 (defun find-letter (params)
   (let* ((http-params (make-instance '<http-params> :params params))
@@ -68,4 +72,4 @@
       (<missing-param-error> (e)
         (format nil "缺少必备参数~A" (missing-param-error-param-name e))))))
 
-(setf (ningle:route *app* "/letter") #'find-letter)
+(setf (ningle:route *app* "/letter" :method :post) #'find-letter)

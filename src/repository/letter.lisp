@@ -160,14 +160,16 @@
     ;;--- TODO: 将这里优化为一段子查询
     ;; 由于拼音存储在表t_letter_pinyin表中的，因此需要额外查询。
     (when pinyin
-      (let* ((letter-pinyins (find-letter-pinyins connection pinyin))
-             (letter-ids (mapcar #'(lambda (letter-pinyin)
-                                     (getf letter-pinyin :|letter_id|))
-                                 letter-pinyins)))
+      (let ((letter-ids '()))
+        (dolist (pinyin pinyin)
+          (let* ((letter-pinyins (find-letter-pinyins connection pinyin))
+                 (partial-ids (mapcar #'(lambda (letter-pinyin)
+                                          (getf letter-pinyin :|letter_id|))
+                                      letter-pinyins)))
+            (setf letter-ids (append letter-ids partial-ids))))
         (where builder (list :in "id" letter-ids))))
     (when radicals
-      (check-type radicals character)
-      (where builder (list := "radicals" radicals)))
+      (where builder (list :in "radicals" radicals)))
     (let ((sql (to-sql builder)))
       (format t "待执行的SQL语句为~S~%" sql)
       (execute-sql connection sql)
