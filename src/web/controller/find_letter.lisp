@@ -37,13 +37,10 @@
   (let* ((params (http-params-params params))
          (content (cdr (assoc "content" params :test #'string=)))
          (tone (cdr (assoc "tone" params :test #'string=))))
-    (when (null content)
+    (when (and (null content) (null tone))
       (return-from get-pinyin nil))
-    
-    (let ((pinyin (make-instance '<pinyin> :content content)))
-      (when tone
-        (setf (pinyin-tone pinyin) tone))
-      pinyin)))
+
+    (make-instance '<pinyin> :content content :tone tone)))
 
 (defmethod get-radicals ((params <http-params>))
   "从HTTP请求中提取偏旁部首。"

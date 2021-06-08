@@ -39,9 +39,9 @@
 (defun find-letter-pinyins (connection pinyin)
   (check-type pinyin <pinyin>)
   (let ((builder (make-instance '<sql-builder> :table "t_letter_pinyin" :type :select)))
-    (when (pinyin-content-bound-p pinyin)
+    (when (pinyin-content pinyin)
       (where builder (list := "content" (pinyin-content pinyin))))
-    (when (pinyin-tone-bound-p pinyin)
+    (when (pinyin-tone pinyin)
       (where builder (list := "tone" (pinyin-tone pinyin))))
     (let ((sql (to-sql builder)))
       (execute-sql connection sql)
@@ -157,6 +157,7 @@
                                 :table "t_letter"
                                 :type :select))
         (connection (mysql-letter-repository-connection repository)))
+    ;;--- TODO: 将这里优化为一段子查询
     ;; 由于拼音存储在表t_letter_pinyin表中的，因此需要额外查询。
     (when pinyin
       (let* ((letter-pinyins (find-letter-pinyins connection pinyin))
@@ -168,6 +169,7 @@
       (check-type radicals character)
       (where builder (list := "radicals" radicals)))
     (let ((sql (to-sql builder)))
+      (format t "待执行的SQL语句为~S~%" sql)
       (execute-sql connection sql)
       (let ((rows (fetch-all connection)))
         (mapcar #'(lambda (row)

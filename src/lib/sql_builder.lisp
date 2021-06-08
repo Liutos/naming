@@ -47,10 +47,6 @@
   (with-slots (type) builder
     (to-typed-sql builder type)))
 
-(defun value-to-format (value)
-  "根据要写入SQL的值VALUE的类型决定对应的格式化字符串。"
-  )
-
 (defun condition-to-sql (conditions s)
   "将CONDITIONS转换为SQL的WHERE子句。"
   (check-type conditions list)
@@ -60,10 +56,14 @@
     (dotimes (i (length conditions))
       (with-slots (column operator value)
           (nth i conditions)
-        (let ((fmt (typecase value
-                     (character " `~A` ~A '~C'")
-                     (t " `~A` ~A ~S"))))
-          (format s fmt column operator value)))
+        ;;--- TODO: 这里要怎么写才比较优雅呢？
+        (cond ((eq operator :in)
+               (format s " `~A` IN (~{~S~^, ~})" column value))
+              (t
+               (let ((fmt (typecase value
+                            (character " `~A` ~A '~C'")
+                            (t " `~A` ~A ~S"))))
+                 (format s fmt column operator value)))))
       (when (< i (1- (length conditions)))
         (format s " AND")))))
 
