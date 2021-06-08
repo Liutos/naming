@@ -13,6 +13,7 @@
   (:import-from #:naming.app.use-case.find-letter-by-pinyin
                 #:<use-case>
                 #:get-pinyin
+                #:get-radicals
                 #:run)
   (:import-from #:naming.web.app
                 #:*app*))
@@ -37,14 +38,20 @@
          (content (cdr (assoc "content" params :test #'string=)))
          (tone (cdr (assoc "tone" params :test #'string=))))
     (when (null content)
-      (error '<missing-param-error> :param-name "content"))
+      (return-from get-pinyin nil))
     
     (let ((pinyin (make-instance '<pinyin> :content content)))
       (when tone
         (setf (pinyin-tone pinyin) tone))
       pinyin)))
 
-(defun find-letter-by-pinyin (params)
+(defmethod get-radicals ((params <http-params>))
+  "从HTTP请求中提取偏旁部首。"
+  (let* ((params (http-params-params params))
+         (radicals (cdr (assoc "radicals" params :test #'string=))))
+    (and radicals (char radicals 0))))
+
+(defun find-letter (params)
   (let* ((http-params (make-instance '<http-params> :params params))
          (mysql-connection (open-mysql-connection))
          (letter-repository (make-instance '<mysql-letter-repository>
@@ -54,11 +61,14 @@
                                   :params http-params)))
     (handler-case
         (let ((letters (run use-case)))
-          (jonathan:to-json
-           (mapcar #'(lambda (letter)
-                       (list :content (letter-content letter)))
-                   letters)))
+          (list
+           200
+           (list :content-type "application/json")
+           (list (jonathan:to-json
+                  (mapcar #'(lambda (letter)
+                              (list :content (letter-content letter)))
+                          letters)))))
       (<missing-param-error> (e)
         (format nil "缺少必备参数~A" (missing-param-error-param-name e))))))
 
-(setf (ningle:route *app* "/letter") #'find-letter-by-pinyin)
+(setf (ningle:route *app* "/letter") #'find-letter)

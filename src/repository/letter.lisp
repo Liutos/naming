@@ -15,7 +15,8 @@
                 #:pinyin-content
                 #:pinyin-content-bound-p
                 #:pinyin-tone
-                #:pinyin-tone-bound-p)
+                #:pinyin-tone-bound-p
+                #:query)
   (:import-from #:naming.lib.sql-builder
                 #:<sql-builder>
                 #:to-sql
@@ -148,3 +149,35 @@
                              :pinyins pinyins)
               letters)))
     (nreverse letters)))
+
+(defmethod query ((repository <mysql-letter-repository>) &rest args
+                  &key pinyin radicals)
+  (declare (ignorable args))
+  (let ((builder (make-instance '<sql-builder>
+                                :table "t_letter"
+                                :type :select))
+        (connection (mysql-letter-repository-connection repository)))
+    ;; 由于拼音存储在表t_letter_pinyin表中的，因此需要额外查询。
+    (when pinyin
+      (let* ((letter-pinyins (find-letter-pinyins connection pinyin))
+             (letter-ids (mapcar #'(lambda (letter-pinyin)
+                                     (getf letter-pinyin :|letter_id|))
+                                 letter-pinyins)))
+        (where builder (list :in "id" letter-ids))))
+    (when radicals
+      (check-type radicals character)
+      (where builder (list := "radicals" radicals)))
+    (let ((sql (to-sql builder)))
+      (execute-sql connection sql)
+      (let ((rows (fetch-all connection)))
+        (mapcar #'(lambda (row)
+                    (make-instance '<letter>
+                                   :content (getf row :|content|)
+                                   :id (getf row :|id|)
+                                   :pinyins (mapcar #'(lambda (pinyin-plist)
+                                                        (make-instance '<pinyin>
+                                                                       :content (getf pinyin-plist :|content|)
+                                                                       :tone (getf pinyin-plist :|tone|)))
+                                                    (find-pinyins-by-letter connection (getf row :|id|)))
+                                   :radicals (getf row :|radicals|)))
+                rows)))))
