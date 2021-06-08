@@ -47,37 +47,68 @@
   (with-slots (type) builder
     (to-typed-sql builder type)))
 
+(defun value-to-format (value)
+  "根据要写入SQL的值VALUE的类型决定对应的格式化字符串。"
+  )
+
+(defun condition-to-sql (conditions s)
+  "将CONDITIONS转换为SQL的WHERE子句。"
+  (check-type conditions list)
+  (check-type s stream)
+  (when conditions
+    (format s " WHERE")
+    (dotimes (i (length conditions))
+      (with-slots (column operator value)
+          (nth i conditions)
+        (let ((fmt (typecase value
+                     (character " `~A` ~A '~C'")
+                     (t " `~A` ~A ~S"))))
+          (format s fmt column operator value)))
+      (when (< i (1- (length conditions)))
+        (format s " AND")))))
+
+(defun pairs-to-sql (pairs s)
+  "将PAIRS转换为SQL的SET子句。"
+  (when pairs
+    (format s " SET")
+    (dotimes (i (length pairs))
+      (let ((pair (nth i pairs)))
+        (destructuring-bind (column . value) pair
+          (let ((fmt (typecase value
+                       (character " `~A` = '~C'")
+                       (null " `~A` = NULL")
+                       (t " `~A` = ~S"))))
+            (format s fmt column value))))
+      (when (< i (1- (length pairs)))
+        (format s ", ")))))
+
+(defmethod to-typed-sql ((builder <sql-builder>) (type (eql :delete)))
+  "生成DELETE语句。"
+  (with-output-to-string (s)
+    (format s "DELETE FROM `~A`" (slot-value builder 'table))
+    (condition-to-sql (slot-value builder 'conditions) s)))
+
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :insert)))
   "生成INSERT语句。"
   (with-output-to-string (s)
     (with-slots (pairs table) builder
       (format s "INSERT INTO `~A`" table)
-      (when pairs
-        (format s " SET")
-        (dotimes (i (length pairs))
-          (let ((pair (nth i pairs)))
-            (destructuring-bind (column . value) pair
-              (format s " `~A` = ~S" column value)))
-          (when (< i (1- (length pairs)))
-            (format s ", ")))))))
+      (pairs-to-sql pairs s))))
 
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :select)))
   "生成SELECT语句。"
   (with-output-to-string (s)
     (with-slots (conditions table) builder
       (format s "SELECT * FROM `~A`" table)
-      (when conditions
-        (format s " WHERE")
-        (dotimes (i (length conditions))
-          (with-slots (column operator value)
-              (nth i conditions)
-            (let (fmt)
-              (typecase value
-                (character (setf fmt " `~A` ~A '~C'"))
-                (t (setf fmt " `~A` ~A ~S")))
-              (format s fmt column operator value)))
-          (when (< i (1- (length conditions)))
-            (format s " AND")))))))
+      (condition-to-sql conditions s))))
+
+(defmethod to-typed-sql ((builder <sql-builder>) (type (eql :update)))
+  "生成UPDATE语句。"
+  (with-output-to-string (s)
+    (with-slots (conditions pairs table) builder
+      (format s "UPDATE `~A`" table)
+      (pairs-to-sql pairs s)
+      (condition-to-sql conditions s))))
 
 (defmethod where ((builder <sql-builder>) (clause list))
   "如果是列表类型的子句，那么其结构为(操作符 列 值)"

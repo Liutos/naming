@@ -20,11 +20,21 @@
     :reader letter-content
     :type character)
    (id
+    :accessor letter-id
     :initarg :id
-    :accessor letter-id)
+    :initform nil
+    :type integer)
    (pinyins
-    :initarg :pinyins
-    :reader letter-pinyins))
+    :accessor letter-pinyins
+    :initarg :pinyins)
+   (radicals
+    :accessor letter-radicals
+    :documentation "字的偏旁部首。
+
+有些字没有偏旁部首，如桛，因此该字段有可能为空。"
+    :initarg :radicals
+    :initform nil
+    :type character))
   (:documentation "汉字值类型"))
 
 (defgeneric add (repository letter)

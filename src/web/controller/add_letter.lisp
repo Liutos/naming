@@ -47,7 +47,6 @@
 (defun add-letter (params)
   (let* ((http-params (make-instance '<http-params> :params params))
          (mysql-connection (open-mysql-connection)))
-    ;;--- TODO: 处理完毕要关闭连接
     (unwind-protect
          (let* ((letter-repository (make-instance '<mysql-letter-repository>
                                                   :connection mysql-connection))

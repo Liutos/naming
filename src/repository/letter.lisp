@@ -11,6 +11,7 @@
                 #:letter-content
                 #:letter-id
                 #:letter-pinyins
+                #:letter-radicals
                 #:pinyin-content
                 #:pinyin-content-bound-p
                 #:pinyin-tone
@@ -18,6 +19,7 @@
   (:import-from #:naming.lib.sql-builder
                 #:<sql-builder>
                 #:to-sql
+                #:set-pair
                 #:where)
   (:import-from #:naming.repository.connection-interface
                 #:execute-sql
@@ -57,20 +59,56 @@
     (fetch-one connection)))
 
 (defmethod add ((repository <mysql-letter-repository>) (letter <letter>))
-  (let* ((connection (mysql-letter-repository-connection repository))
-         (sql (format nil "INSERT INTO `t_letter` SET `content` = '~A'"
-                      (letter-content letter))))
-    (execute-sql connection sql)
-    (let ((id (get-last-insert-id connection)))
-      ;; 写完t_letter表再写t_letter_pinyin表
-      (dolist (pinyin (letter-pinyins letter))
-        (execute-sql connection
-                     (format nil "INSERT INTO `t_letter_pinyin` SET `content` = '~A', `letter_id` = ~D, `tone` = ~D"
-                             (pinyin-content pinyin)
-                             id
-                             (pinyin-tone pinyin))))
-      (setf (letter-id letter) id)
-      letter)))
+  "将一个字LETTER保存到存储仓库REPOSITORY中。
+
+如果LETTER的槽ID不为空，则更新REPOSITORY中已经存在的数据。"
+  (if (letter-id letter)
+      ;; 更新已有的字。先更新t_letter_pinyin表，再更新t_letter表。
+      (with-slots (connection) repository
+        (let (builder
+              (letter-id (letter-id letter))
+              sql)
+          (setf builder (make-instance '<sql-builder>
+                                       :table "t_letter_pinyin"
+                                       :type :delete))
+          (where builder (list := "letter_id" letter-id))
+          (setf sql (to-sql builder))
+          (execute-sql connection sql)
+
+          (dolist (pinyin (letter-pinyins letter))
+            (check-type pinyin <pinyin>)
+            (setf builder (make-instance '<sql-builder>
+                                         :table "t_letter_pinyin"
+                                         :type :insert))
+            (set-pair builder "content" (pinyin-content pinyin))
+            (set-pair builder "letter_id" letter-id)
+            (set-pair builder "tone" (pinyin-tone pinyin))
+            (setf sql (to-sql builder))
+            (execute-sql connection sql))
+
+          (setf builder (make-instance '<sql-builder>
+                                       :table "t_letter"
+                                       :type :update))
+          (set-pair builder "content" (letter-content letter))
+          (set-pair builder "radicals" (letter-radicals letter))
+          (where builder (list := "id" letter-id))
+          (setf sql (to-sql builder))
+          (execute-sql connection sql)))
+      ;; 写入新的字
+      (let* ((connection (mysql-letter-repository-connection repository))
+             (sql (format nil "INSERT INTO `t_letter` SET `content` = '~A'"
+                          (letter-content letter))))
+        (execute-sql connection sql)
+        (let ((id (get-last-insert-id connection)))
+          ;; 写完t_letter表再写t_letter_pinyin表
+          (dolist (pinyin (letter-pinyins letter))
+            (execute-sql connection
+                         (format nil "INSERT INTO `t_letter_pinyin` SET `content` = '~A', `letter_id` = ~D, `tone` = ~D"
+                                 (pinyin-content pinyin)
+                                 id
+                                 (pinyin-tone pinyin))))
+          (setf (letter-id letter) id)
+          letter))))
 
 (defmethod find-by-content ((repository <mysql-letter-repository>) (content character))
   "找出写做CONTENT的字对象。"

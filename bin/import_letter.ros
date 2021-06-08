@@ -16,8 +16,11 @@ exec ros -Q -- $0 "$@"
                 #:<letter>
                 #:<pinyin>
                 #:add
+                #:find-by-content
                 #:letter-content
-                #:letter-id)
+                #:letter-id
+                #:letter-pinyins
+                #:letter-radicals)
   (:import-from #:naming.infra.db-connection
                 #:close-mysql-connection
                 #:open-mysql-connection)
@@ -119,18 +122,31 @@ exec ros -Q -- $0 "$@"
          (file-path (get-file-path params)))
     (let* ((content (read-content file-service file-path))
            (raw-letters (jonathan:parse content
-                                        :keywords-to-read '("pinyin" "word"))))
+                                        :keywords-to-read '("pinyin" "radicals" "word"))))
       (dolist (raw-letter raw-letters)
         (let* ((content (char (getf raw-letter :|word|) 0))
-               (pinyin (getf raw-letter :|pinyin|)))
+               (pinyin (getf raw-letter :|pinyin|))
+               (radicals (getf raw-letter :|radicals|)))
+          (if (> (length radicals) 0)
+              (setf radicals (char radicals 0))
+              (setf radicals nil))
           (multiple-value-bind (pinyin-content tone)
               (pinyin-to-ascii pinyin)
             (let* ((pinyins (list (make-instance '<pinyin>
                                                  :content pinyin-content
                                                  :tone tone)))
-                   (letter (make-instance '<letter>
-                                          :content content
-                                          :pinyins pinyins)))
+                   (letter (find-by-content letter-repository content)))
+              ;; 找不到就创建一个，add会处理好存在与不存在两种情况。
+              (if letter
+                  ;; 找得到还要把拼音、偏旁部首加上。
+                  (progn
+                    (setf (letter-pinyins letter) pinyins)
+                    (setf (letter-radicals letter) radicals))
+                  (setf letter
+                        (make-instance '<letter>
+                                       :content content
+                                       :pinyins pinyins
+                                       :radicals radicals)))
               (add letter-repository letter)
               (format t "添加了文字~C，ID为~D~%"
                       (letter-content letter)
