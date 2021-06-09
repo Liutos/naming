@@ -10,12 +10,17 @@
                 #:<pinyin>
                 #:letter-content
                 #:letter-id
+                #:letter-stroke
                 #:query))
 
 (in-package #:naming.app.use-case.find-letter-group)
 
 (defclass <letter-specification> ()
-  ((pinyins
+  ((contents
+    :documentation "这个字本身"
+    :initarg :contents
+    :initform nil)
+   (pinyins
     :initarg :pinyins
     :initform nil)
    (radicals
@@ -62,10 +67,12 @@
             (spec2 (second specifications)))
         (setf letters1
               (query letter-repository
+                     :content (slot-value spec1 'contents)
                      :pinyin (slot-value spec1 'pinyins)
                      :radicals (slot-value spec1 'radicals)))
         (setf letters2
               (query letter-repository
+                     :content (slot-value spec2 'contents)
                      :pinyin (slot-value spec2 'pinyins)
                      :radicals (slot-value spec2 'radicals)))
         ;; 一次性找出所有的成语，再逐个匹配。
@@ -99,4 +106,12 @@
                                             common-idiom-ids)
                             :second letter2)
                       result)))))
-        (nreverse result)))))
+        (setf result (nreverse result))
+        (setf result (sort result #'(lambda (e1 e2)
+                                      ;; 总笔画数少的汉字组合排在前面
+                                      (let ((first-letter1 (getf e1 :first))
+                                            (first-letter2 (getf e2 :first))
+                                            (second-letter1 (getf e1 :second))
+                                            (second-letter2 (getf e2 :second)))
+                                        (< (+ (letter-stroke first-letter1) (letter-stroke second-letter1))
+                                           (+ (letter-stroke first-letter2) (letter-stroke second-letter2)))))))))))

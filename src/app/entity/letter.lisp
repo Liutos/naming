@@ -52,9 +52,10 @@
 (defgeneric find-by-pinyin (repository pinyin)
   (:documentation "找出相同发音的汉字"))
 
-(defgeneric query (repository &rest args &key pinyin radicals)
+(defgeneric query (repository &rest args &key content pinyin radicals)
   (:documentation "找出符合要求的汉字。
 
+如果CONTENT不为空，则查询结果必须是给定的这个字；
 如果PINYIN不为空，则必须为一个`<PINYIN>'类型的对象，查询结果的汉字必须为该发音；
 如果RADICALS不为空，则查询结果的汉字必须为该部首。"))
 

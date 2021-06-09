@@ -35,9 +35,13 @@
   (let* ((params (http-params-params params))
          (specifications (cdr (assoc "specifications" params :test #'string=))))
     (mapcar #'(lambda (specification)
-                (let ((pinyins (cdr (assoc "pinyins" specification :test #'string=)))
+                (let ((contents (cdr (assoc "contents" specification :test #'string=)))
+                      (pinyins (cdr (assoc "pinyins" specification :test #'string=)))
                       (radicals (cdr (assoc "radicals" specification :test #'string=))))
                   (make-instance '<letter-specification>
+                                 :contents (mapcar #'(lambda (content)
+                                                       (char content 0))
+                                                   contents)
                                  :pinyins (mapcar #'(lambda (pinyin)
                                                       (make-instance '<pinyin>
                                                                      :content (cdr (assoc "content" pinyin :test #'string=))

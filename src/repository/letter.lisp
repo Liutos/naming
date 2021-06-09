@@ -155,12 +155,14 @@
     (nreverse letters)))
 
 (defmethod query ((repository <mysql-letter-repository>) &rest args
-                  &key pinyin radicals)
+                  &key content pinyin radicals)
   (declare (ignorable args))
   (let ((builder (make-instance '<sql-builder>
                                 :table "t_letter"
                                 :type :select))
         (connection (mysql-letter-repository-connection repository)))
+    (when content
+      (where builder (list :in "content" content)))
     ;;--- TODO: 将这里优化为一段子查询
     ;; 由于拼音存储在表t_letter_pinyin表中的，因此需要额外查询。
     (when pinyin
@@ -187,5 +189,6 @@
                                                                        :content (getf pinyin-plist :|content|)
                                                                        :tone (getf pinyin-plist :|tone|)))
                                                     (find-pinyins-by-letter connection (getf row :|id|)))
-                                   :radicals (getf row :|radicals|)))
+                                   :radicals (getf row :|radicals|)
+                                   :stroke (getf row :|stroke|)))
                 rows)))))
