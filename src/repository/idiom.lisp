@@ -5,6 +5,7 @@
   (:import-from #:naming.app.entity.idiom
                 #:<idiom>
                 #:add
+                #:find-if-contain
                 #:idiom-id
                 #:idiom-letters
                 #:query)
@@ -62,17 +63,50 @@
           (setf (idiom-id idiom) idiom-id)
           idiom)))))
 
-(defmethod query ((repository <mysql-idiom-repository>) &rest args &key letter-id)
+(defmethod find-if-contain ((repository <mysql-idiom-repository>) (letter-ids list))
+  "找出同时包含LETTER-IDS中的字的成语。"
+  ;; 这里需要用EXISTS子句，直接拼字符串吧。
+  (let ((sql
+         (format nil "SELECT * FROM `t_idiom` AS ti WHERE EXISTS (SELECT * FROM `t_idiom_letter` WHERE ti.`id` = `t_idiom_letter`.`idiom_id` AND `t_idiom_letter`.`letter_id` = ~D) AND EXISTS (SELECT * FROM `t_idiom_letter` WHERE ti.`id` = `t_idiom_letter`.`idiom_id` AND `t_idiom_letter`.`letter_id` = ~D)"
+                 (first letter-ids)
+                 (second letter-ids))))
+    (with-slots (connection) repository
+      (execute-sql connection sql)
+      (let ((rows (fetch-all connection)))
+        (mapcar #'(lambda (row)
+                    (make-instance '<idiom>
+                                   :content (getf row :|content|)
+                                   :id (getf row :|id|)
+                                   :letters '()))
+                rows)))))
+
+(defun find-idiom-letter-ids (connection idiom-id)
+  (let ((builder (make-instance '<sql-builder>
+                                :table "t_idiom_letter"
+                                :type :select)))
+    (where builder (list := "idiom_id" idiom-id))
+    (execute-sql connection (to-sql builder))
+    (let ((rows (fetch-all connection)))
+      (mapcar #'(lambda (row)
+                  (getf row :|letter_id|))
+              rows))))
+
+(defmethod query ((repository <mysql-idiom-repository>) &rest args &key idiom-ids letter-id)
   "查找出符合条件的成语。
 
+如果IDIOM-IDS不为NIL，那么结果的成语必须在这批ID中；
 如果LETTER-ID不为NIL，那么结果的成语必须含有这个id的字。"
+  ;;--- TODO: 支持idiom-ids参数。
   (declare (ignorable args))
   (let ((builder (make-instance '<sql-builder>
                                 :table "t_idiom_letter"
                                 :type :select)))
     (when letter-id
-      (where builder (list := "letter_id" letter-id)))
+      (unless (listp letter-id)
+        (setf letter-id (list letter-id)))
+      (where builder (list :in "letter_id" letter-id)))
     (let ((sql (to-sql builder)))
+      (format t "sql is ~A~%" sql)
       (with-slots (connection) repository
         (execute-sql connection sql)
         (let ((rows (fetch-all connection)))
@@ -87,5 +121,6 @@
                             (make-instance '<idiom>
                                            :content (getf idiom-row :|content|)
                                            :id (getf idiom-row :|id|)
+                                           :letter-ids (find-idiom-letter-ids connection (getf idiom-row :|id|))
                                            :letters '())))))
                   rows))))))
