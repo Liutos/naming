@@ -20,7 +20,8 @@ exec ros -Q -- $0 "$@"
                 #:letter-content
                 #:letter-id
                 #:letter-pinyins
-                #:letter-radicals)
+                #:letter-radicals
+                #:letter-stroke)
   (:import-from #:naming.infra.db-connection
                 #:close-mysql-connection
                 #:open-mysql-connection)
@@ -108,6 +109,7 @@ exec ros -Q -- $0 "$@"
 
 (defgeneric run (use-case))
 
+;;;--- TODO: 改为从命令行参数中读取。
 (defmethod get-file-path ((params <params>))
   "/Users/liutos/Projects/chinese-xinhua/data/word.json")
 
@@ -122,11 +124,12 @@ exec ros -Q -- $0 "$@"
          (file-path (get-file-path params)))
     (let* ((content (read-content file-service file-path))
            (raw-letters (jonathan:parse content
-                                        :keywords-to-read '("pinyin" "radicals" "word"))))
+                                        :keywords-to-read '("pinyin" "radicals" "strokes" "word"))))
       (dolist (raw-letter raw-letters)
         (let* ((content (char (getf raw-letter :|word|) 0))
                (pinyin (getf raw-letter :|pinyin|))
-               (radicals (getf raw-letter :|radicals|)))
+               (radicals (getf raw-letter :|radicals|))
+               (stroke (getf raw-letter :|strokes|)))
           (if (> (length radicals) 0)
               (setf radicals (char radicals 0))
               (setf radicals nil))
@@ -141,12 +144,14 @@ exec ros -Q -- $0 "$@"
                   ;; 找得到还要把拼音、偏旁部首加上。
                   (progn
                     (setf (letter-pinyins letter) pinyins)
-                    (setf (letter-radicals letter) radicals))
+                    (setf (letter-radicals letter) radicals)
+                    (setf (letter-stroke letter) stroke))
                   (setf letter
                         (make-instance '<letter>
                                        :content content
                                        :pinyins pinyins
-                                       :radicals radicals)))
+                                       :radicals radicals
+                                       :stroke stroke)))
               (add letter-repository letter)
               (format t "添加了文字~C，ID为~D~%"
                       (letter-content letter)

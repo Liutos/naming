@@ -3,6 +3,7 @@ CREATE TABLE `t_letter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `content` CHAR(1) NOT NULL COMMENT '字本身',
   `radicals` CHAR(1) DEFAULT '' COMMENT '偏旁部首',
+  `stroke` INT NOT NULL COMMENT '笔画数',
   PRIMARY KEY (`id`),
   INDEX `ix__radicals` (`radicals`)
 );

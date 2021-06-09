@@ -12,6 +12,7 @@
                 #:letter-id
                 #:letter-pinyins
                 #:letter-radicals
+                #:letter-stroke
                 #:pinyin-content
                 #:pinyin-content-bound-p
                 #:pinyin-tone
@@ -92,13 +93,16 @@
                                        :type :update))
           (set-pair builder "content" (letter-content letter))
           (set-pair builder "radicals" (letter-radicals letter))
+          (set-pair builder "stroke" (letter-stroke letter))
           (where builder (list := "id" letter-id))
           (setf sql (to-sql builder))
           (execute-sql connection sql)))
       ;; 写入新的字
       (let* ((connection (mysql-letter-repository-connection repository))
-             (sql (format nil "INSERT INTO `t_letter` SET `content` = '~A'"
-                          (letter-content letter))))
+             (sql (format nil "INSERT INTO `t_letter` SET `content` = '~A', `radicals` = '~C', `stroke` = ~D"
+                          (letter-content letter)
+                          (letter-radicals letter)
+                          (letter-stroke letter))))
         (execute-sql connection sql)
         (let ((id (get-last-insert-id connection)))
           ;; 写完t_letter表再写t_letter_pinyin表

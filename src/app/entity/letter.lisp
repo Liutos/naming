@@ -34,7 +34,13 @@
 有些字没有偏旁部首，如桛，因此该字段有可能为空。"
     :initarg :radicals
     :initform nil
-    :type character))
+    :type character)
+   (stroke
+    :accessor letter-stroke
+    :documentation "笔画数"
+    :initarg :stroke
+    :initform nil
+    :type integer))
   (:documentation "汉字值类型"))
 
 (defgeneric add (repository letter)
