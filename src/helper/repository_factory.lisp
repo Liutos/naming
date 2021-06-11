@@ -22,20 +22,29 @@
   (:documentation "生成不同的实体的仓库。"))
 
 (defmethod make-repository ((factory <repository-factory>) (type (eql :idiom)))
+  (unless (slot-boundp factory 'connection)
+    (setf (slot-value factory 'connection)
+          (open-mysql-connection)))
   (with-slots (connection) factory
     (make-instance '<mysql-idiom-repository>
                    :connection connection)))
 
 (defmethod make-repository ((factory <repository-factory>) (type (eql :letter)))
+  (unless (slot-boundp factory 'connection)
+    (setf (slot-value factory 'connection)
+          (open-mysql-connection)))
   (with-slots (connection) factory
     (make-instance '<mysql-letter-repository>
                    :connection connection)))
 
 (defmethod make-repository ((factory <repository-factory>) (type (eql :poetry)))
+  (unless (slot-boundp factory 'connection)
+    (setf (slot-value factory 'connection)
+          (open-mysql-connection)))
   (with-slots (connection) factory
     (make-instance '<mysql-poetry-repository>
                    :connection connection)))
 
 (defvar *mysql-repository-factory*
-  (make-instance '<repository-factory>
-                 :connection (open-mysql-connection)))
+  nil
+  "负责存储公用的MySQL数据库连接。")
