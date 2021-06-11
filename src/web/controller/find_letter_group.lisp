@@ -17,6 +17,7 @@
   (:import-from #:naming.app.use-case.find-letter-group
                 #:<letter-specification>
                 #:<use-case>
+                #:get-source
                 #:get-specification
                 #:run)
   (:import-from #:naming.web.app
@@ -29,6 +30,12 @@
     :documentation "来自ningle框架的输入参数"
     :initarg :params
     :reader http-params-params)))
+
+(defmethod get-source ((params <http-params>))
+  (with-slots (params) params
+    (let ((source (cdr (assoc "source" params :test #'string=))))
+      (when (stringp source)
+        (intern (string-upcase source) :keyword)))))
 
 (defmethod get-specification ((params <http-params>))
   "从HTTP请求中提取对汉字的要求。"
