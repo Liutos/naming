@@ -12,6 +12,8 @@
     :initform nil)
    (conditions
     :initform ())
+   (order-by
+    :documentation "SELECT语句的排序方向。")
    (pairs
     :documentation "要插入表中的值及其所属的列。"
     :initform ())
@@ -33,6 +35,14 @@
     :initarg :operator)
    (value
     :initarg :value)))
+
+(defgeneric order-by (builder column direction)
+  (:documentation "指定SELECT语句的排序方向。")
+  (:method ((builder <sql-builder>)
+            (column string)
+            (direction string))
+    (setf (slot-value builder 'order-by)
+          (cons column direction))))
 
 (defgeneric set-columns (builder columns)
   (:documentation "设定插入的列。"))
@@ -141,8 +151,10 @@
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :select)))
   "生成SELECT语句。"
   (with-output-to-string (s)
-    (with-slots (conditions table) builder
-      (format s "SELECT * FROM `~A`" table)
+    (with-slots (columns conditions table) builder
+      (unless columns
+        (setf columns '("*")))
+      (format s "SELECT ~{`~A`~^, ~} FROM `~A`" columns table)
       (condition-to-sql conditions s))))
 
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :update)))
@@ -182,6 +194,7 @@
                                 :type :select)))
     (alexandria:doplist (cmd val args)
       (ecase cmd
-        (:set-pair (apply #'set-pair builder val))
+        (:columns (set-columns builder val))
+        (:order-by (apply #'order-by builder val))
         (:where (where builder val))))
     (to-sql builder)))

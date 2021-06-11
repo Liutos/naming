@@ -8,6 +8,9 @@
                 #:<pinyin>
                 #:letter-content
                 #:pinyin-tone)
+  (:import-from #:naming.helper.repository-factory
+                #:*mysql-repository-factory*
+                #:make-repository)
   (:import-from #:naming.infra.db-connection
                 #:open-mysql-connection)
   (:import-from #:naming.repository.idiom
@@ -61,27 +64,27 @@
 
 (defun find-letter-group (params)
   (let* ((http-params (make-instance '<http-params> :params params))
-         (mysql-connection (open-mysql-connection))
-         (idiom-repository (make-instance '<mysql-idiom-repository>
-                                          :connection mysql-connection))
-         (letter-repository (make-instance '<mysql-letter-repository>
-                                           :connection mysql-connection))
+         (idiom-repository (make-repository *mysql-repository-factory* :idiom))
+         (letter-repository (make-repository *mysql-repository-factory* :letter))
+         (poetry-repository (make-repository *mysql-repository-factory* :poetry))
          (use-case (make-instance '<use-case>
                                   :idiom-repository idiom-repository
                                   :letter-repository letter-repository
-                                  :params http-params)))
+                                  :params http-params
+                                  :poetry-repository poetry-repository)))
     (let ((result (run use-case)))
       (list
        200
        (list :content-type "application/json")
        (list (jonathan:to-json
               (mapcar #'(lambda (result)
-                          (destructuring-bind (&key first idioms second)
+                          (destructuring-bind (&key first idioms poetry-sentences second)
                               result
                             (list :first (letter-content first)
                                   :idioms (mapcar #'(lambda (idiom)
                                                       (list :content (idiom-content idiom)))
                                                   idioms)
+                                  :poetry-sentences poetry-sentences
                                   :second (letter-content second))))
                       result)))))))
 

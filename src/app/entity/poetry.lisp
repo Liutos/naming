@@ -10,11 +10,13 @@
     :documentation "诗中完整的两句的内容。"
     :initarg :contents
     :reader poetry-sentences-contents)
+   (id
+    :initarg :id)
    (letter-ids
+    :accessor poetry-sentences-letter-ids
     :documentation "这两句诗中的字的ID"
     :initarg :letter-ids
-    :initform nil
-    :reader poetry-sentences-letter-ids))
+    :initform nil))
   (:documentation "诗中的两句。"))
 
 (defclass <poetry> ()
@@ -38,3 +40,6 @@
 
 (defgeneric add (repository poetry)
   (:documentation "保存一首诗。"))
+
+(defgeneric find-sentences-if-contain (repository letter-ids)
+  (:documentation "找出同时含有LETTER-IDS中的字的诗句。"))

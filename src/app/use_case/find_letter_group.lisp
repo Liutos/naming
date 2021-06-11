@@ -11,7 +11,11 @@
                 #:letter-content
                 #:letter-id
                 #:letter-stroke
-                #:query))
+                #:query)
+  (:import-from #:naming.app.entity.poetry
+                #:find-sentences-if-contain
+                #:poetry-sentences-contents
+                #:poetry-sentences-letter-ids))
 
 (in-package #:naming.app.use-case.find-letter-group)
 
@@ -49,7 +53,9 @@
     :reader use-case-letter-repository)
    (params
     :initarg :params
-    :reader use-case-params))
+    :reader use-case-params)
+   (poetry-repository
+    :initarg :poetry-repository))
   (:documentation "搜索符合要求的成对的汉字。"))
 
 (defmethod run ((use-case <use-case>))
@@ -58,7 +64,7 @@
 - :FIRST，表示第一个字；
 - :SECOND，表示第二个字；
 - :IDIOMS，表示含有这两个字的成语的列表。"
-  (with-slots (idiom-repository letter-repository params)
+  (with-slots (idiom-repository letter-repository params poetry-repository)
       use-case
     (let ((specifications (get-specification params)))
       (assert (= (length specifications) 2))
@@ -113,6 +119,36 @@
                                  :idioms (mapcar #'(lambda (idiom-id)
                                                      (gethash idiom-id idiom-table))
                                                  common-idiom-ids)
+                                 :second letter2)
+                           result)))))))
+          (:poetry
+           (let ((sentences-list (find-sentences-if-contain poetry-repository
+                                                            (append (mapcar #'letter-id letters1)
+                                                                    (mapcar #'letter-id letters2))))
+                 (sentences-table (make-hash-table)))
+             (format t "sentences-list is ~D~%" (length sentences-list))
+             ;; 转换为字的ID到<POETRY-SENTENCES>对象的哈希表，方便查找。
+             (dolist (sentences sentences-list)
+               (let ((letter-ids (poetry-sentences-letter-ids sentences)))
+                 (dolist (letter-id letter-ids)
+                   (multiple-value-bind (sentences-list found)
+                       (gethash letter-id sentences-table)
+                     (cond ((not found)
+                            (setf (gethash letter-id sentences-table) (list sentences)))
+                           ((not (member sentences sentences-list))
+                            (push sentences
+                                  (gethash letter-id sentences-table))))))))
+             ;; 同样是判断两个字有交集即可。
+             (dolist (letter1 letters1)
+               (dolist (letter2 letters2)
+                 (let* ((sentences-list1 (gethash (letter-id letter1) sentences-table))
+                        (sentences-list2 (gethash (letter-id letter2) sentences-table))
+                        (common-sentences (intersection sentences-list1 sentences-list2)))
+                   (when common-sentences
+                     (push (list :first letter1
+                                 :poetry-sentences (mapcar #'(lambda (sentences)
+                                                               (poetry-sentences-contents sentences))
+                                                           common-sentences)
                                  :second letter2)
                            result)))))))
           (t

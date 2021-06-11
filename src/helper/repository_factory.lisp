@@ -46,5 +46,5 @@
                    :connection connection)))
 
 (defvar *mysql-repository-factory*
-  nil
+  (make-instance '<repository-factory>)
   "负责存储公用的MySQL数据库连接。")
