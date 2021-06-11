@@ -6,7 +6,11 @@
 (in-package #:naming.lib.sql-builder)
 
 (defclass <sql-builder> ()
-  ((conditions
+  ((columns
+    :documentation "批量插入时的列名。"
+    :initarg :columns
+    :initform nil)
+   (conditions
     :initform ())
    (pairs
     :documentation "要插入表中的值及其所属的列。"
@@ -15,7 +19,11 @@
     :initarg :table)
    (type
     :documentation "SQL语句的类型，支持:select"
-    :initarg :type))
+    :initarg :type)
+   (values
+    :documentation "批量插入时的值列表。"
+    :initarg :values
+    :initform nil))
   (:documentation "SQL构造器。"))
 
 (defclass <where-clause> ()
@@ -26,8 +34,14 @@
    (value
     :initarg :value)))
 
+(defgeneric set-columns (builder columns)
+  (:documentation "设定插入的列。"))
+
 (defgeneric set-pair (builder column value)
   (:documentation "往生成器中添加一对列和值。"))
+
+(defgeneric set-values (builder values)
+  (:documentation "添加一组批量插入的值。"))
 
 (defgeneric to-sql (builder)
   (:documentation "生成SQL语句。"))
@@ -38,14 +52,40 @@
 (defgeneric where (builder clause)
   (:documentation "往生成器中添加一个查询条件。"))
 
+(defmethod set-columns ((builder <sql-builder>) (columns list))
+  (setf (slot-value builder 'columns) columns)
+  builder)
+
 (defmethod set-pair ((builder <sql-builder>) (column string) (value t))
-  (with-slots (pairs) builder
-    (push (cons column value) pairs)
+  (with-slots (columns pairs values) builder
+    (unless (position column columns :test #'string=)
+      (push column columns)
+      (unless values
+        (setf values (list nil)))
+      (push value (first values))
+      (push (cons column value) pairs))
     builder))
+
+(defmethod set-values ((builder <sql-builder>) (values list))
+  (push values (slot-value builder 'values))
+  builder)
 
 (defmethod to-sql ((builder <sql-builder>))
   (with-slots (type) builder
     (to-typed-sql builder type)))
+
+(defun columns-values-to-sql (columns values s)
+  "将COLUMNS和VALUES转换为INSERT中批量插入的子句，打印到字符流S中。"
+  (check-type columns list)
+  (check-type s stream)
+  (check-type values list)
+  (format s " (~{`~A`~^, ~})" columns)
+  (format s " VALUES ")
+  (dotimes (i (length values))
+    (let ((vals (nth i values)))
+      (format s "(~{~S~^, ~})" vals))
+    (when (< i (1- (length values)))
+      (format s ", "))))
 
 (defun condition-to-sql (conditions s)
   "将CONDITIONS转换为SQL的WHERE子句。"
@@ -93,9 +133,10 @@
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :insert)))
   "生成INSERT语句。"
   (with-output-to-string (s)
-    (with-slots (pairs table) builder
+    (with-slots (columns table values) builder
       (format s "INSERT INTO `~A`" table)
-      (pairs-to-sql pairs s))))
+      ;; (pairs-to-sql pairs s)
+      (columns-values-to-sql columns values s))))
 
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :select)))
   "生成SELECT语句。"
@@ -123,3 +164,24 @@
                            :value value)
             conditions)))
   builder)
+
+(defun make-insert-statement (table &rest pairs)
+  "生成INSERT语句。"
+  (check-type table string)
+  (let ((builder (make-instance '<sql-builder>
+                                :table table
+                                :type :insert)))
+    (alexandria:doplist (column value pairs)
+      (set-pair builder column value))
+    (to-sql builder)))
+
+(defun make-select-statement (table &rest args)
+  (check-type table string)
+  (let ((builder (make-instance '<sql-builder>
+                                :table table
+                                :type :select)))
+    (alexandria:doplist (cmd val args)
+      (ecase cmd
+        (:set-pair (apply #'set-pair builder val))
+        (:where (where builder val))))
+    (to-sql builder)))

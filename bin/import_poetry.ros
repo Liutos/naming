@@ -1,0 +1,125 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  ;;#+quicklisp(ql:quickload '() :silent t)
+  (ql:quickload :naming))
+
+(defpackage :ros.script.import_poetry.3832306740
+  (:use :cl)
+  (:import-from #:naming.app.use-case.add-poetry
+                #:<use-case>
+                #:get-author
+                #:get-content
+                #:get-title
+                #:run)
+  (:import-from #:naming.helper.repository-factory
+                #:*mysql-repository-factory*
+                #:make-repository))
+(in-package :ros.script.import_poetry.3832306740)
+
+(defclass <file-params> ()
+  ((author
+    :initarg :author
+    :initform nil)
+   (content
+    :initarg :content
+    :initform nil)
+   (title
+    :initarg :title
+    :initform nil)))
+
+(defmethod get-author ((params <file-params>))
+  (slot-value params 'author))
+
+(defmethod get-content ((params <file-params>))
+  (slot-value params 'content))
+
+(defmethod get-title ((params <file-params>))
+  (slot-value params 'title))
+
+(defvar *files*
+  '("/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.9000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.8000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.7000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.6000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.57000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.56000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.55000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.54000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.53000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.52000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.51000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.50000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.5000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.49000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.48000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.47000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.46000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.45000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.44000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.43000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.42000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.41000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.40000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.4000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.39000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.38000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.37000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.36000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.35000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.34000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.33000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.32000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.31000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.30000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.3000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.29000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.28000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.27000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.26000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.25000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.24000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.23000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.22000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.21000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.20000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.2000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.19000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.18000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.17000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.16000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.15000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.14000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.13000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.12000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.11000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.10000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.1000.json"
+    "/Users/liutos/Projects/chinese-poetry-master/json/poet.tang.0.json"))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (let* ((files *files*)
+         (letter-repository (make-repository *mysql-repository-factory* :letter))
+         (poetry-repository (make-repository *mysql-repository-factory* :poetry)))
+    (dolist (file files)
+      (format t "开始处理文件~A~%" file)
+      (let* ((file-content (uiop:read-file-string file))
+             (poetries (jonathan:parse file-content)))
+        (dolist (poetry-plist poetries)
+          (let* ((title (getf poetry-plist :|title|))
+                 (params (make-instance '<file-params>
+                                        :author (getf poetry-plist :|author|)
+                                        :content (getf poetry-plist :|paragraphs|)
+                                        :title title))
+                 (use-case (make-instance '<use-case>
+                                         :letter-repository letter-repository
+                                         :params params
+                                         :poetry-repository poetry-repository)))
+            (run use-case)
+            (format t "添加了诗《~A》~%" title)))))))
+;;; vim: set ft=lisp lisp:

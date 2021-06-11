@@ -8,6 +8,7 @@
                 #:add
                 #:find-by-content
                 #:find-by-pinyin
+                #:find-letter-ids
                 #:letter-content
                 #:letter-id
                 #:letter-pinyins
@@ -20,6 +21,7 @@
                 #:query)
   (:import-from #:naming.lib.sql-builder
                 #:<sql-builder>
+                #:make-select-statement
                 #:to-sql
                 #:set-pair
                 #:where)
@@ -123,7 +125,7 @@
         sql)
     (where builder (list := "content" content))
     (setf sql (to-sql builder))
-    (format t "sql is ~A~%" sql)
+    ;; (format t "sql is ~A~%" sql)
     (let ((connection (mysql-letter-repository-connection repository)))
       (execute-sql connection sql)
       (let ((plist (fetch-one connection)))
@@ -153,6 +155,16 @@
                              :pinyins pinyins)
               letters)))
     (nreverse letters)))
+
+(defmethod find-letter-ids ((repository <mysql-letter-repository>) (contents list))
+  (let* ((sql (make-select-statement "t_letter"
+                                     :where (list :in "content" contents))))
+    (with-slots (connection) repository
+      (execute-sql connection sql)
+      (let ((rows (fetch-all connection)))
+        (mapcar #'(lambda (row)
+                    (getf row :|id|))
+                rows)))))
 
 (defmethod query ((repository <mysql-letter-repository>) &rest args
                   &key content pinyin radicals)

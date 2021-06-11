@@ -36,3 +36,32 @@ CREATE TABLE `t_idiom_letter` (
   INDEX `ix__idiom_id` (`idiom_id`),
   INDEX `ix__letter_id` (`letter_id`)
 );
+
+DROP TABLE IF EXISTS `t_poetry`;
+CREATE TABLE `t_poetry` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `author` VARCHAR(100) DEFAULT '',
+  `title` VARCHAR(1000) DEFAULT '',
+  PRIMARY KEY (`id`),
+  INDEX `ix__content` (`content`(255))
+);
+
+DROP TABLE IF EXISTS `t_poetry_sentence`;
+CREATE TABLE `t_poetry_sentence` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poetry_id` INT NOT NULL,
+  `content` TEXT NOT NULL COMMENT '诗中两句的内容',
+  PRIMARY KEY (`id`),
+  INDEX `ix__content` (`content`(255)),
+  INDEX `ix__poetry_id` (`poetry_id`)
+);
+
+DROP TABLE IF EXISTS `t_letter_poetry_sentence`;
+CREATE TABLE `t_letter_poetry_sentence` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `letter_id` INT NOT NULL,
+  `poetry_sentence_id` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `ix__letter_id` (`letter_id`),
+  INDEX `ix__poetry_sentence_id` (`poetry_sentence_id`)
+);

@@ -52,6 +52,9 @@
 (defgeneric find-by-pinyin (repository pinyin)
   (:documentation "找出相同发音的汉字"))
 
+(defgeneric find-letter-ids (repository contents)
+  (:documentation "根据字找到它们的ID。"))
+
 (defgeneric query (repository &rest args &key content pinyin radicals)
   (:documentation "找出符合要求的汉字。
 

@@ -8,11 +8,13 @@
 (defsystem #:naming
   :author "Liutos <mat.liutos@gmail.com>"
   :version "0.1.0"
-  :depends-on (#:cl-dbi
+  :depends-on (#:alexandria
+               #:cl-dbi
                #:cl-ppcre
                #:clack
                #:jonathan
-               #:ningle)
+               #:ningle
+               #:uiop)
   :components
   ((:module "src"
             :components
@@ -21,15 +23,21 @@
                       ((:module "entity"
                                 :components
                                 ((:file "idiom")
-                                 (:file "letter")))
+                                 (:file "letter")
+                                 (:file "poetry")))
                        (:module "use_case"
                                 :components
                                 ((:file "add_idiom")
                                  (:file "add_letter")
+                                 (:file "add_poetry")
                                  (:file "find_idiom_by_letter")
                                  (:file "find_letter")
                                  (:file "find_letter_group"))
                                 :depends-on ("entity"))))
+             (:module "helper"
+                      :components
+                      ((:file "repository_factory"))
+                      :depends-on ("infra" "repository"))
              (:module "infra"
                       :components
                       ((:file "db_connection"))
@@ -43,6 +51,8 @@
                        (:file "idiom"
                               :depends-on ("connection_interface"))
                        (:file "letter"
+                              :depends-on ("connection_interface"))
+                       (:file "poetry"
                               :depends-on ("connection_interface")))
                       :depends-on ("lib"))
              (:module "web"
