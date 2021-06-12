@@ -67,7 +67,7 @@
            (list :content-type "application/json")
            (list (jonathan:to-json
                   (mapcar #'(lambda (letter)
-                              (list :content (letter-content letter)))
+                              (list :content (string (letter-content letter))))
                           letters)))))
       (<missing-param-error> (e)
         (format nil "缺少必备参数~A" (missing-param-error-param-name e))))))
