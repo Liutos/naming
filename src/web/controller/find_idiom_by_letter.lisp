@@ -36,10 +36,14 @@
                                   :letter-repository letter-repository
                                   :params params)))
     (let ((idioms (run use-case)))
-      (jonathan:to-json
-       (mapcar #'(lambda (idiom)
-                   (list :content (idiom-content idiom)
-                         :id (idiom-id idiom)))
-               idioms)))))
+      (list
+       200
+       '(:content-type "application/json")
+       (list
+        (jonathan:to-json
+         (mapcar #'(lambda (idiom)
+                     (list :content (idiom-content idiom)
+                           :id (idiom-id idiom)))
+                 idioms)))))))
 
 (setf (ningle:route *app* "/idiom") #'find-idiom-by-letter)
