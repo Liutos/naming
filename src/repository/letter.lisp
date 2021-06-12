@@ -22,6 +22,7 @@
   (:import-from #:naming.lib.sql-builder
                 #:<sql-builder>
                 #:make-select-statement
+                #:order-by
                 #:to-sql
                 #:set-pair
                 #:where)
@@ -188,6 +189,7 @@
         (where builder (list :in "id" letter-ids))))
     (when radicals
       (where builder (list :in "radicals" radicals)))
+    (order-by builder "stroke" "asc")
     (let ((sql (to-sql builder)))
       (format t "待执行的SQL语句为~S~%" sql)
       (execute-sql connection sql)

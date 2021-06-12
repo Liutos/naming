@@ -13,7 +13,8 @@
    (conditions
     :initform ())
    (order-by
-    :documentation "SELECT语句的排序方向。")
+    :documentation "SELECT语句的排序方向。"
+    :initform nil)
    (pairs
     :documentation "要插入表中的值及其所属的列。"
     :initform ())
@@ -151,11 +152,15 @@
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :select)))
   "生成SELECT语句。"
   (with-output-to-string (s)
-    (with-slots (columns conditions table) builder
+    (with-slots (columns conditions order-by table) builder
       (unless columns
         (setf columns '("*")))
       (format s "SELECT ~{`~A`~^, ~} FROM `~A`" columns table)
-      (condition-to-sql conditions s))))
+      (condition-to-sql conditions s)
+      (when order-by
+        (format s " ORDER BY `~A` ~A"
+                (car order-by)
+                (cdr order-by))))))
 
 (defmethod to-typed-sql ((builder <sql-builder>) (type (eql :update)))
   "生成UPDATE语句。"
