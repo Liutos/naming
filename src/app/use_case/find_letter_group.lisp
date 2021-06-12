@@ -145,12 +145,19 @@
                         (sentences-list2 (gethash (letter-id letter2) sentences-table))
                         (common-sentences (intersection sentences-list1 sentences-list2)))
                    (when common-sentences
-                     (push (list :first letter1
-                                 :poetry-sentences (mapcar #'(lambda (sentences)
-                                                               (poetry-sentences-contents sentences))
-                                                           common-sentences)
-                                 :second letter2)
-                           result)))))))
+                     (let ((poetry-sentences-list '()))
+                       (dolist (sentences common-sentences)
+                         (let ((contents (poetry-sentences-contents sentences))
+                               (letter-content1 (letter-content letter1))
+                               (letter-content2 (letter-content letter2)))
+                           (when (< (position letter-content1 contents :test #'char=)
+                                    (position letter-content2 contents :test #'char=))
+                             (push contents poetry-sentences-list))))
+                       (when poetry-sentences-list
+                         (push (list :first letter1
+                                     :poetry-sentences poetry-sentences-list
+                                     :second letter2)
+                               result)))))))))
           (t
            (dolist (letter1 letters1)
              (dolist (letter2 letters2)

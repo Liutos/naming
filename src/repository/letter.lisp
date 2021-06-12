@@ -196,7 +196,7 @@
       (let ((rows (fetch-all connection)))
         (mapcar #'(lambda (row)
                     (make-instance '<letter>
-                                   :content (getf row :|content|)
+                                   :content (char (getf row :|content|) 0)
                                    :id (getf row :|id|)
                                    :pinyins (mapcar #'(lambda (pinyin-plist)
                                                         (make-instance '<pinyin>

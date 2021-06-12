@@ -80,12 +80,12 @@
               (mapcar #'(lambda (result)
                           (destructuring-bind (&key first idioms poetry-sentences second)
                               result
-                            (list :first (letter-content first)
+                            (list :first (string (letter-content first))
                                   :idioms (mapcar #'(lambda (idiom)
                                                       (list :content (idiom-content idiom)))
                                                   idioms)
                                   :poetry-sentences poetry-sentences
-                                  :second (letter-content second))))
+                                  :second (string (letter-content second)))))
                       result)))))))
 
 (setf (ningle:route *app* "/letter-group" :method :post) #'find-letter-group)
