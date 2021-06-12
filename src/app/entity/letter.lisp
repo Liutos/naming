@@ -8,6 +8,7 @@
 (defclass <pinyin> ()
   ((content
     :initarg :content
+    :initform nil
     :reader pinyin-content)
    (tone
     :accessor pinyin-tone
@@ -17,6 +18,7 @@
 (defclass <letter> ()
   ((content
     :initarg :content
+    :initform nil
     :reader letter-content
     :type character)
    (id
@@ -26,7 +28,8 @@
     :type integer)
    (pinyins
     :accessor letter-pinyins
-    :initarg :pinyins)
+    :initarg :pinyins
+    :initform nil)
    (radicals
     :accessor letter-radicals
     :documentation "字的偏旁部首。

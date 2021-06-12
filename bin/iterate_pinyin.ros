@@ -1,0 +1,48 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  ;;#+quicklisp(ql:quickload '() :silent t)
+  (ql:quickload 'naming))
+
+(defpackage :ros.script.iterate_pinyin.3832453463
+  (:use :cl)
+  (:import-from #:naming.app.entity.letter
+                #:letter-content)
+  (:import-from #:naming.app.use-case.find-letter-unique-pinyin
+                #:<use-case>
+                #:get-exclusive-initials
+                #:get-exclusive-vowels
+                #:run)
+  (:import-from #:naming.helper.repository-factory
+                #:*mysql-repository-factory*
+                #:make-repository)
+  (:import-from #:ruyi
+                #:vertical-let*))
+(in-package :ros.script.iterate_pinyin.3832453463)
+
+(defmethod get-exclusive-initials ((params null))
+  '("j"))
+
+(defmethod get-exclusive-vowels ((params null))
+  '("ie" "iu"))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (vertical-let*
+    :with letter-repository = (make-repository *mysql-repository-factory* :letter)
+    :with use-case = (make-instance '<use-case>
+                                    :letter-repository letter-repository
+                                    :params nil)
+    :with result-set = (run use-case)
+    :with prefix = (uiop:getenv "PREFIX")
+    :with suffix = (uiop:getenv "SUFFIX")
+    ;;--- TODO: 是否有可以生成表格数据的库？
+    (dolist (result result-set)
+      (destructuring-bind (&key letter pronunciation)
+          result
+        (format t "~A~16T~A~A~A~%" pronunciation prefix (letter-content letter) suffix)))))
+;;; vim: set ft=lisp lisp:

@@ -14,6 +14,8 @@
                #:clack
                #:jonathan
                #:ningle
+               #:ruyi
+               #:str
                #:uiop)
   :components
   ((:module "src"
@@ -32,7 +34,8 @@
                                  (:file "add_poetry")
                                  (:file "find_idiom_by_letter")
                                  (:file "find_letter")
-                                 (:file "find_letter_group"))
+                                 (:file "find_letter_group")
+                                 (:file "find_letter_unique_pinyin"))
                                 :depends-on ("entity"))))
              (:module "helper"
                       :components
