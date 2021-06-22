@@ -168,7 +168,7 @@
                 rows)))))
 
 (defmethod query ((repository <mysql-letter-repository>) &rest args
-                  &key content pinyin radicals)
+                  &key content exclusives pinyin radicals)
   (declare (ignorable args))
   (let ((builder (make-instance '<sql-builder>
                                 :table "t_letter"
@@ -176,6 +176,8 @@
         (connection (mysql-letter-repository-connection repository)))
     (when content
       (where builder (list :in "content" content)))
+    (when exclusives
+      (where builder (list :not-in "content" exclusives)))
     ;;--- TODO: 将这里优化为一段子查询
     ;; 由于拼音存储在表t_letter_pinyin表中的，因此需要额外查询。
     (when pinyin

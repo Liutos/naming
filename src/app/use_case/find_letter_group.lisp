@@ -24,6 +24,10 @@
     :documentation "这个字本身"
     :initarg :contents
     :initform nil)
+   (exclusives
+    :documentation "要排除的汉字列表。"
+    :initarg :exclusives
+    :initform nil)
    (pinyins
     :initarg :pinyins
     :initform nil)
@@ -80,11 +84,13 @@
         (setf letters1
               (query letter-repository
                      :content (slot-value spec1 'contents)
+                     :exclusives (slot-value spec1 'exclusives)
                      :pinyin (slot-value spec1 'pinyins)
                      :radicals (slot-value spec1 'radicals)))
         (setf letters2
               (query letter-repository
                      :content (slot-value spec2 'contents)
+                     :exclusives (slot-value spec2 'exclusives)
                      :pinyin (slot-value spec2 'pinyins)
                      :radicals (slot-value spec2 'radicals)))
         (case (get-source params)

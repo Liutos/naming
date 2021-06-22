@@ -112,6 +112,8 @@
                (format s " `~A` IN (~{~D~^, ~})" column value))
               ((and (eq operator :in) (characterp (first value)))
                (format s " `~A` IN (~{'~C'~^, ~})" column value))
+              ((and (eq operator :not-in) (characterp (first value)))
+               (format s " `~A` NOT IN (~{'~C'~^, ~})" column value))
               (t
                (let ((fmt (typecase value
                             (character " `~A` ~A '~C'")

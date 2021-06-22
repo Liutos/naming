@@ -46,12 +46,16 @@
          (specifications (cdr (assoc "specifications" params :test #'string=))))
     (mapcar #'(lambda (specification)
                 (let ((contents (cdr (assoc "contents" specification :test #'string=)))
+                      (exclusives (cdr (assoc "exclusives" specification :test #'string=)))
                       (pinyins (cdr (assoc "pinyins" specification :test #'string=)))
                       (radicals (cdr (assoc "radicals" specification :test #'string=))))
                   (make-instance '<letter-specification>
                                  :contents (mapcar #'(lambda (content)
                                                        (char content 0))
                                                    contents)
+                                 :exclusives (mapcar #'(lambda (content)
+                                                         (char content 0))
+                                                     exclusives)
                                  :pinyins (mapcar #'(lambda (pinyin)
                                                       (make-instance '<pinyin>
                                                                      :content (cdr (assoc "content" pinyin :test #'string=))
