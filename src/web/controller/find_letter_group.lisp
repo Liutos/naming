@@ -19,9 +19,11 @@
                 #:<mysql-letter-repository>)
   (:import-from #:naming.app.use-case.find-letter-group
                 #:<letter-specification>
+                #:<param-error>
                 #:<use-case>
                 #:get-source
                 #:get-specification
+                #:param-error-message
                 #:run)
   (:import-from #:naming.web.app
                 #:*app*))
@@ -76,20 +78,23 @@
                                   :letter-repository letter-repository
                                   :params http-params
                                   :poetry-repository poetry-repository)))
-    (let ((result (run use-case)))
-      (list
-       200
-       (list :content-type "application/json")
-       (list (jonathan:to-json
-              (mapcar #'(lambda (result)
-                          (destructuring-bind (&key first idioms poetry-sentences second)
-                              result
-                            (list :first (string (letter-content first))
-                                  :idioms (mapcar #'(lambda (idiom)
-                                                      (list :content (idiom-content idiom)))
-                                                  idioms)
-                                  :poetry-sentences poetry-sentences
-                                  :second (string (letter-content second)))))
-                      result)))))))
+    (handler-case
+        (let ((result (run use-case)))
+          (list
+           200
+           (list :content-type "application/json")
+           (list (jonathan:to-json
+                  (mapcar #'(lambda (result)
+                              (destructuring-bind (&key first idioms poetry-sentences second)
+                                  result
+                                (list :first (string (letter-content first))
+                                      :idioms (mapcar #'(lambda (idiom)
+                                                          (list :content (idiom-content idiom)))
+                                                      idioms)
+                                      :poetry-sentences poetry-sentences
+                                      :second (string (letter-content second)))))
+                          result)))))
+      (<param-error> (c)
+        (list 400 nil (list (param-error-message c)))))))
 
 (setf (ningle:route *app* "/letter-group" :method :post) #'find-letter-group)

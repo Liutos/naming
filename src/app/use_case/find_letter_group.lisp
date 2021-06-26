@@ -62,6 +62,19 @@
     :initarg :poetry-repository))
   (:documentation "搜索符合要求的成对的汉字。"))
 
+(define-condition <param-error> ()
+  ((message
+    :initarg :message
+    :reader param-error-message))
+  (:documentation "表示参数存在错误。"))
+
+(defun validate-specification (specification)
+  "检查CONTENTS/PINYINS/RADICALS是否至少存在一个。"
+  (with-slots (contents pinyins radicals)
+      specification
+    (when (every #'null (list contents pinyins radicals))
+      (error '<param-error> :message "CONTENTS/PINYINS/RADICALS必须至少填充一个"))))
+
 (defmethod run ((use-case <use-case>))
   "返回结果为一个列表，其中每个元素都为一个plist。plist中有三个属性：
 
@@ -81,6 +94,8 @@
             result
             (spec1 (first specifications))
             (spec2 (second specifications)))
+        (validate-specification spec1)
+        (validate-specification spec2)
         (setf letters1
               (query letter-repository
                      :content (slot-value spec1 'contents)
